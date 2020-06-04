@@ -29,7 +29,7 @@ class Registry(object):
 
     def register_module(self, name=None):
         def _register(cls):
-            self._register_class(module_class=cls, module_name=name)
+            self._register_module(module_class=cls, module_name=name)
         return _register
 
 

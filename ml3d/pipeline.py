@@ -15,3 +15,10 @@ class Predictor():
             checkpoint = load_checkpoint(self.network, checkpoint)
         else :
             warnings:.warn('No checkpoint file')
+
+        pipeline = [LoadImage()] + cfg.data.test.pipeline[1:]
+
+        self._pipeline = Compose(pipeline)
+
+    def __call__(self, input_data):
+
