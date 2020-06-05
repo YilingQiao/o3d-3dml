@@ -1,3 +1,4 @@
+import torch
 from collections import OrderedDict
 
 
@@ -12,7 +13,7 @@ def load_checkpoint(model,
     # checkpoint = _load_checkpoint(filename, map_location)
     # TODO load from url
     checkpoint = torch.load(filename, map_location=map_location)
-
+    """
     # get state_dict from checkpoint
     if isinstance(checkpoint, OrderedDict):
         state_dict = checkpoint
@@ -29,4 +30,5 @@ def load_checkpoint(model,
         load_state_dict(model.module, state_dict, strict, logger)
     else:
         load_state_dict(model, state_dict, strict, logger)
+    """
     return checkpoint

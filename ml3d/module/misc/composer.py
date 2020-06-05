@@ -3,11 +3,9 @@ import collections
 from ..builder import COMPOSER
 
 
-@COMPOSER.register_module()
 class Composer(object):
-
     def __init__(self, modules):
-        assert isinstance(transforms, collections.abc.Sequence)
+        assert isinstance(modules, collections.abc.Sequence)
         self.modules = []
         for m in modules:
             if callable(m):
@@ -29,3 +27,10 @@ class Composer(object):
             format_string += f'    {t}'
         format_string += '\n)'
         return format_string
+
+class aaa(object):
+    """docstring for aaa"""
+    def __init__(self, arg):
+        super(aaa, self).__init__()
+        self.arg = arg
+        
