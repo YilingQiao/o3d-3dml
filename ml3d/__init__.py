@@ -1,5 +1,5 @@
-from .pipeline import Predictor
+from .pipeline import Predictor, Trainer
 
 __all__ = [
-    'Predictor'
+    'Predictor', 'Trainer'
 ]

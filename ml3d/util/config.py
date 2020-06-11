@@ -3,6 +3,44 @@ import shutil
 import sys
 import tempfile
 from importlib import import_module
+from addict import Dict
+
+
+class ConfigDict(Dict):
+
+    def __missing__(self, name):
+        raise KeyError(name)
+
+    def __getattr__(self, name):
+        try:
+            value = super(ConfigDict, self).__getattr__(name)
+        except KeyError:
+            ex = AttributeError(f"'{self.__class__.__name__}' object has no "
+                                f"attribute '{name}'")
+        except Exception as e:
+            ex = e
+        else:
+            return value
+        raise ex
+
+
+def add_args(parser, cfg, prefix=''):
+    for k, v in cfg.items():
+        if isinstance(v, str):
+            parser.add_argument('--' + prefix + k)
+        elif isinstance(v, int):
+            parser.add_argument('--' + prefix + k, type=int)
+        elif isinstance(v, float):
+            parser.add_argument('--' + prefix + k, type=float)
+        elif isinstance(v, bool):
+            parser.add_argument('--' + prefix + k, action='store_true')
+        elif isinstance(v, dict):
+            add_args(parser, v, prefix + k + '.')
+        elif isinstance(v, abc.Iterable):
+            parser.add_argument('--' + prefix + k, type=type(v[0]), nargs='+')
+        else:
+            print(f'cannot parse key {prefix + k} of type {type(v)}')
+    return parser
 
 
 class Config(object):
@@ -13,6 +51,8 @@ class Config(object):
         elif not isinstance(cfg_dict, dict):
             raise TypeError('cfg_dict shoud be a dict, but'
                             f'got {type(cfg_dict)}')
+
+        super(Config, self).__setattr__('_cfg_dict', ConfigDict(cfg_dict))
 
         self.cfg_dict = cfg_dict
 
@@ -45,6 +85,13 @@ class Config(object):
 
         return Config(cfg_dict)
 
-    
+
+    def __getattr__(self, name):
+        return getattr(self._cfg_dict, name)
+
+    def __getitem__(self, name):
+        return self._cfg_dict.__getitem__(name)
+
+
 
         
