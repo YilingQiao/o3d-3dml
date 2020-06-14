@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, IterableDataset, DataLoader, Sampler, BatchSampler
 
-from utils.tools import Config as cfg
+#from utils.tools import Config as cfg
 from utils.tools import DataProcessing as DP
 
 
@@ -192,7 +192,7 @@ class ActiveLearningSampler(IterableDataset):
 
         for i in range(self.n_samples * Config.batch_size):  # num_per_epoch
             # t0 = time.time()
-            if cfg.sampling_type=='active_learning':
+            if Config.sampling_type=='active_learning':
                 # Generator loop
 
                 # Choose a random cloud
@@ -211,10 +211,10 @@ class ActiveLearningSampler(IterableDataset):
                 noise = np.random.normal(scale=3.5 / 10, size=center_point.shape)
                 pick_point = center_point + noise.astype(center_point.dtype)
 
-                if len(points) < cfg.num_points:
+                if len(points) < Config.num_points:
                     queried_idx = self.dataset.input_trees[self.split][cloud_idx].query(pick_point, k=len(points))[1][0]
                 else:
-                    queried_idx = self.dataset.input_trees[self.split][cloud_idx].query(pick_point, k=cfg.num_points)[1][0]
+                    queried_idx = self.dataset.input_trees[self.split][cloud_idx].query(pick_point, k=Config.num_points)[1][0]
 
                 queried_idx = DP.shuffle_idx(queried_idx)
                 # Collect points and colors
@@ -228,16 +228,16 @@ class ActiveLearningSampler(IterableDataset):
                 self.possibility[self.split][cloud_idx][queried_idx] += delta
                 self.min_possibility[self.split][cloud_idx] = float(np.min(self.possibility[self.split][cloud_idx]))
 
-                if len(points) < cfg.num_points:
+                if len(points) < Config.num_points:
                     queried_pc_xyz, queried_pc_colors, queried_idx, queried_pc_labels = \
-                        DP.data_aug(queried_pc_xyz, queried_pc_colors, queried_pc_labels, queried_idx, cfg.num_points)
+                        DP.data_aug(queried_pc_xyz, queried_pc_colors, queried_pc_labels, queried_idx, Config.num_points)
 
             # Simple random choice of cloud and points in it
-            elif cfg.sampling_type=='random':
+            elif Config.sampling_type=='random':
 
                 cloud_idx = np.random.choice(len(self.min_possibility[self.split]), 1)[0]
                 points = np.array(self.dataset.input_trees[self.split][cloud_idx].data, copy=False)
-                queried_idx = np.random.choice(len(self.dataset.input_trees[self.split][cloud_idx].data), cfg.num_points)
+                queried_idx = np.random.choice(len(self.dataset.input_trees[self.split][cloud_idx].data), Config.num_points)
                 queried_pc_xyz = points[queried_idx]
                 queried_pc_colors = self.dataset.input_colors[self.split][cloud_idx][queried_idx]
                 queried_pc_labels = self.dataset.input_labels[self.split][cloud_idx][queried_idx]
