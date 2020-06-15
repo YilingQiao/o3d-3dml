@@ -187,10 +187,13 @@ class LocalFeatureAggregation(nn.Module):
 @NETWORK.register_module()
 class RandLANet(nn.Module):
     def __init__(self, d_in, num_classes, num_neighbors=16, decimation=4, device=torch.device('cpu')):
+        
         super().__init__()
         # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.num_neighbors = num_neighbors
         self.decimation = decimation
+
+        self.criterion = nn.CrossEntropyLoss()
 
         self.fc_start = nn.Linear(d_in, 8)
         self.bn_start = nn.Sequential(
@@ -231,6 +234,20 @@ class RandLANet(nn.Module):
         self.device = device
 
         self = self.to(device)
+
+    def compute_loss(self, results, ground_truth):
+        logp = torch.distributions.utils.probs_to_logits(results, is_binary=False)
+        losses = dict()
+
+
+        
+        loss = self.criterion(logp, ground_truth)
+
+        main_loss = dict()
+        main_loss['loss'] = loss
+
+        losses.update(main_loss)
+        return losses
 
     def forward(self, input):
         r"""

@@ -55,6 +55,7 @@ class LrUpdaterHook(Hook):
         self.regular_lr = []  # expected lr if no warming up is performed
 
     def _set_lr(self, runner, lr_groups):
+        
         for param_group, lr in zip(runner.optimizer.param_groups, lr_groups):
             param_group['lr'] = lr
 

@@ -17,6 +17,7 @@ class Runner():
 
     def __init__(self,
                  model,
+                 batch_processor=None,
                  optimizer=None,
                  work_dir=None,
                  logger=None,
@@ -24,6 +25,8 @@ class Runner():
        
         self.model = model
         self.optimizer = optimizer
+
+        self.batch_processor = batch_processor
 
         # create work_dir
         if isinstance(work_dir, str):
@@ -60,6 +63,13 @@ class Runner():
         # TODO: Redesign LogBuffer, it is not flexible and elegant enough
         #self.log_buffer = LogBuffer()
 
+
+    @property
+    def iter(self):
+        """int: Current iteration."""
+        return self._iter
+
+
     def train(self, data_loader, **kwargs):
         self.model.train()
         self.mode = 'train'
@@ -67,6 +77,7 @@ class Runner():
         self._max_iters = self._max_epochs * len(data_loader)
         self.call_hook('before_train_epoch')
         time.sleep(2)  # Prevent possible deadlock during epoch transition
+        print(data_loader)
         for i, data_batch in enumerate(data_loader):
             self._inner_iter = i
             self.call_hook('before_train_iter')
@@ -85,6 +96,7 @@ class Runner():
             self.outputs = outputs
             self.call_hook('after_train_iter')
             self._iter += 1
+            print(self._iter)
 
         self.call_hook('after_train_epoch')
         self._epoch += 1
@@ -201,7 +213,16 @@ class Runner():
         # set `create_symlink` to False
         if create_symlink:
             mmcv.symlink(filename, osp.join(out_dir, 'latest.pth'))
+    
+    def call_hook(self, fn_name):
+        """Call all hooks.
 
+        Args:
+            fn_name (str): The function name in each hook to be called, such as
+                "before_train_epoch".
+        """
+        for hook in self._hooks:
+            getattr(hook, fn_name)(self)
 
     def register_hook(self, hook, priority='NORMAL'):
         """Register a hook into the hook list.

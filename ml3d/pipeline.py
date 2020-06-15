@@ -1,11 +1,40 @@
 import warnings
 import torch
 
-from ml3d.module import (Runner, build_network)
+from ml3d.module import (Runner, build_network, build_optimizer)
 # from ml3d.module import (Runner, build_network, build_dataset, build_dataloader)
 from ml3d.module.misc import Composer
-from ml3d.util import load_checkpoint
+from ml3d.util import load_checkpoint, parse_losses
 
+
+def batch_processor(model, data, train_mode):
+    """Process a data batch.
+
+    This method is required as an argument of Runner, which defines how to
+    process a data batch and obtain proper outputs. The first 3 arguments of
+    batch_processor are fixed.
+
+    Args:
+        model (nn.Module): A PyTorch model.
+        data (dict): The data batch in a dict.
+        train_mode (bool): Training mode or not. It may be useless for some
+            models.
+
+    Returns:
+        dict: A dict containing losses and log vars.
+    """
+    
+    if (train_mode):
+        result  = model(*data[0])
+        losses  = model.compute_loss(result, *data[1])
+        
+        loss, log_vars = parse_losses(losses)
+
+        outputs = dict(loss=loss)
+    # outputs = dict(
+    #     loss=loss, log_vars=log_vars, num_samples=len(data['img'].data))
+
+    return outputs
 
 class Predictor():
     """
@@ -37,7 +66,7 @@ class Predictor():
 
 class Trainer(object):
     """docstring for Trainer"""
-    def __init__(self, cfg, datasets_path):
+    def __init__(self, cfg, data_loaders):
 
         self.cfg = cfg
 
@@ -53,23 +82,26 @@ class Trainer(object):
         #         mmdet_version=__version__,
         #         config=cfg.pretty_text,
         #         CLASSES=datasets[0].CLASSES)
-       
-        self.data_loaders = [
-        build_dataloader(
-            ds,
-            cfg.data.samples_per_gpu,
-            cfg.data.workers_per_gpu,
-            # cfg.gpus will be ignored if distributed
-            len(cfg.gpu_ids),
-            dist=distributed,
-            seed=cfg.seed) for ds in self.dataset
-        ]
 
-        #optimizer = build_optimizer(model, cfg.optimizer)
-        optimizer = None
+
+        self.data_loaders = data_loaders
+        # self.data_loaders = [
+        # build_dataloader(
+        #     ds,
+        #     cfg.data.samples_per_gpu,
+        #     cfg.data.workers_per_gpu,
+        #     # cfg.gpus will be ignored if distributed
+        #     len(cfg.gpu_ids),
+        #     dist=distributed,
+        #     seed=cfg.seed) for ds in self.dataset
+        # ]
+
+        optimizer = build_optimizer(self.network, cfg.optimizer)
+        #optimizer = None
 
         self.runner = Runner(
         self.network,
+        batch_processor,
         optimizer,
         cfg.work_dir,)
 

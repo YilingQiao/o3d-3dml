@@ -1,7 +1,16 @@
+import copy
+
 from ml3d.util import Registry, build_from_cfg
 
 
 OPTIMIZERS = Registry('optimizer')
+OPTIMIZER_BUILDERS = Registry('optimizer builder')
+
+
+
+
+def build_optimizer_constructor(cfg):
+    return build_from_cfg(cfg, OPTIMIZER_BUILDERS)
 
 
 def build_optimizer(model, cfg):
